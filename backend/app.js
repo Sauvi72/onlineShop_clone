@@ -7,7 +7,7 @@ const initialData = require('./data');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
   : '*';
@@ -20,10 +20,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// In-memory data store
+
 let products = [...initialData];
 
-// Optional MongoDB Connection
+
 const MONGO_URI = process.env.MONGO_URI;
 let isDbConnected = false;
 
@@ -40,8 +40,6 @@ if (MONGO_URI) {
   console.log('No MONGO_URI provided. Running backend in in-memory mode.');
 }
 
-// Routes
-// Health check for Render
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
@@ -54,21 +52,21 @@ app.get('/', (req, res) => {
   });
 });
 
-// GET all products
+
 app.get('/api/products', (req, res) => {
   res.json({ success: true, count: products.length, data: products });
 });
 
-// Alias endpoint for /api/data for backward compatibility
+
 app.get('/api/data', (req, res) => {
   res.json({ success: true, count: products.length, data: products });
 });
 
-// POST new product
+
 app.post('/api/products', (req, res) => {
   const { name, title, price, category, description, inStock } = req.body;
   const productName = name || title;
-  
+
   if (!productName) {
     return res.status(400).json({ success: false, message: 'Product name is required' });
   }
@@ -86,7 +84,7 @@ app.post('/api/products', (req, res) => {
   res.status(201).json({ success: true, message: 'Product created successfully', data: newProduct });
 });
 
-// POST alias /api/data
+
 app.post('/api/data', (req, res) => {
   const { name, title, price, category, description, inStock } = req.body;
   const productName = name || title;
