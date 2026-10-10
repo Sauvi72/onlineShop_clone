@@ -3,11 +3,22 @@ import { API_BASE_URL } from './config';
 
 const API_BASE = `${API_BASE_URL}/api/products`;
 
-export default function ProductList() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ProductList({ products: propProducts, onRefresh }) {
+  const [internalProducts, setInternalProducts] = useState([]);
+  const [loading, setLoading] = useState(!propProducts);
   const [error, setError] = useState(null);
-  
+
+  // Normalize products whether received as raw array or API response wrapper { success, data }
+  const normalizeData = (input) => {
+    if (!input) return [];
+    if (Array.isArray(input)) return input;
+    if (Array.isArray(input.data)) return input.data;
+    return [];
+  };
+
+  // Determine current active product list
+  const products = propProducts !== undefined ? normalizeData(propProducts) : internalProducts;
+
   // New Product Form State
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -24,22 +35,22 @@ export default function ProductList() {
       const res = await fetch(API_BASE);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      if (data.success) {
-        setProducts(data.data);
-      } else {
-        throw new Error(data.message || 'Failed to load products');
-      }
+      const list = normalizeData(data);
+      setInternalProducts(list);
+      if (onRefresh) onRefresh(list);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('Could not connect to backend server. Make sure node app.js is running on port 3000.');
+      setError('Could not connect to backend server. Make sure backend is running.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (propProducts === undefined) {
+      fetchProducts();
+    }
+  }, [propProducts]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
